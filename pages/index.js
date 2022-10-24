@@ -1,28 +1,64 @@
 import Head from "next/head";
-import { Container, Text } from "@nextui-org/react";
+import { Container, Text, Grid, Loading } from "@nextui-org/react";
+import fs from "fs";
+import path from "path";
+import matter from "gray-matter";
+import PostCard from "../components/PostCard";
+import { useMediaQuery } from "../utils/useMediaQuery";
 
-export default function Home() {
+export default function Home({ posts }) {
+  const isMd = useMediaQuery(960);
+
   return (
     <Container>
       <Head>
-        <title>Create Next App</title>
+        <title>Z Blog</title>
         <meta name="description" content="Z blog" />
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" href="/images/PersonalComputer.svg" />
       </Head>
-
       <main>
-        <Text
-          h1
-          size={48}
-          css={{
-            textGradient: "45deg, $blue600 -20%, $pink600 50%",
-          }}
-        >
-          Welcome to my Blog!
-        </Text>
+        <Grid.Container justify="center">
+          <Text
+            h1
+            size={isMd ? 24 : 48}
+            css={{
+              textGradient: "45deg, $pink700 -20%, $cyan600 50%",
+              padding: "2rem 0 0.5rem 0",
+            }}
+          >
+            Welcome to my Blog!
+          </Text>
+        </Grid.Container>
+        <Grid.Container justify="center" css={{ padding: "2rem 0" }}>
+          <>
+            {posts
+              ? posts
+                  .reverse()
+                  .map((post, index) => <PostCard key={index} post={post} />)
+              : `${(<Loading color="primary" />)}`}
+          </>
+        </Grid.Container>
       </main>
-
-      <footer></footer>
     </Container>
   );
 }
+
+export const getStaticProps = async () => {
+  const files = fs.readdirSync(path.join("posts"));
+  const posts = files.map((filename) => {
+    const markdownWithMeta = fs.readFileSync(
+      path.join("posts", filename),
+      "utf-8"
+    );
+    const { data: frontMatter } = matter(markdownWithMeta);
+    return {
+      frontMatter,
+      slug: filename.split(".")[0],
+    };
+  });
+  return {
+    props: {
+      posts,
+    },
+  };
+};
